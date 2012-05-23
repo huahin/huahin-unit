@@ -31,7 +31,28 @@ import org.huahin.core.io.Value;
 import org.junit.Before;
 
 /**
+ * This is a test driver of a {@link Summarizer} class.
  *
+ * <p>Example:</p>
+ * <p><blockquote><pre>
+ * public class SummarizerTest extends SummarizerDriver {
+ *   public void test() {
+ *     Record input = new Record();
+ *     input.addValue("label", "label");
+ *     input.addValue("value", 1);
+ *
+ *     Record output = new Record();
+ *     output.addGrouping("label", "label");
+ *     output.addValue("value", 1);
+ *
+ *     run(input, Arrays.asList(output));
+ *   }
+ *
+ *   public Summarizer getSummarizer() {
+ *     return new TestSummarizer();
+ *   }
+ * }
+ * </pre></blockquote></p>
  */
 public abstract class SummarizerDriver {
     private Reducer<Key, Value, Key, Value> reducer;
@@ -47,9 +68,9 @@ public abstract class SummarizerDriver {
     }
 
     /**
-     *
-     * @param input
-     * @param output
+     * Run the test with this method.
+     * @param input input {@link Record} {@link List}
+     * @param output result of {@link Record} {@link List}
      */
     public void run(List<Record> input, List<Record> output) {
         if (input.size() < 0) {
@@ -74,6 +95,7 @@ public abstract class SummarizerDriver {
     }
 
     /**
+     * Set the {@link Summarizer} class in this method.
      * @return new {@link Summarizer}
      */
     public abstract Summarizer getSummarizer();

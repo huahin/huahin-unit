@@ -25,6 +25,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
+import org.huahin.core.DataFormatException;
 import org.huahin.core.Filter;
 import org.huahin.core.SimpleJob;
 import org.huahin.core.io.Key;
@@ -33,7 +34,40 @@ import org.huahin.core.io.Value;
 import org.junit.Before;
 
 /**
+ * This is a test driver of a {@link Filter} class.
  *
+ * <p>Example:</p>
+ * <p><blockquote><pre>
+ * public class FilterTest extends FilterDriver {
+ *   private static final String LABELS = new String[] { "label", "value" };
+ *
+ *   public void testString() {
+ *     String input = "label\t1";
+ *
+ *     Record output = new Record();
+ *     output.addGrouping("label", "label");
+ *     output.addValue("value", 1);
+ *
+ *     run(LABELS, "\t", false, input, Arrays.asList(output));
+ *   }
+ *
+ *   public void testRecord() {
+ *     Record input = new Record();
+ *     input.addValue("label", "label");
+ *     input.addValue("value", 1);
+ *
+ *     Record output = new Record();
+ *     output.addGrouping("label", "label");
+ *     output.addValue("value", 1);
+ *
+ *     run(input, Arrays.asList(output));
+ *   }
+ *
+ *   public Filter getFilter() {
+ *     return new TestFilter();
+ *   }
+ * }
+ * </pre></blockquote></p>
  */
 public abstract class FilterDriver {
     private Mapper<Writable, Writable, Key, Value> mapper;
@@ -49,9 +83,10 @@ public abstract class FilterDriver {
     }
 
     /**
-     *
-     * @param input
-     * @param output
+     * Run the test with this method.
+     * The data is input for the {@link Record}.
+     * @param input input {@link Record}
+     * @param output result of {@link Record} {@link List}
      */
     public void run(Record input, List<Record> output) {
         driver.withInput(input.getKey(), input.getValue());
@@ -66,12 +101,15 @@ public abstract class FilterDriver {
     }
 
     /**
-     *
-     * @param labels
-     * @param separator
+     * Run the test with this method.
+     * The data is input for the {@link String}.
+     * @param labels label of input data
+     * @param separator separator of data
      * @param formatIgnored
-     * @param input
-     * @param output
+     * If true, {@link DataFormatException} will be throw if there is a format error.
+     * If false is ignored (default).
+     * @param input input {@link String} data
+     * @param output result of {@link Record} {@link List}
      */
     public void run(String[] labels,
                     String separator,
@@ -97,6 +135,7 @@ public abstract class FilterDriver {
     }
 
     /**
+     * Set the {@link Filter} class in this method.
      * @return new {@link Filter}
      */
     public abstract Filter getFilter();

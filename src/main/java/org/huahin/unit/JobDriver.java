@@ -40,7 +40,33 @@ import org.huahin.core.util.StringUtil;
 import org.junit.Before;
 
 /**
+ * This is a test driver of a Job.
  *
+ * <p>Example:</p>
+ * <p><blockquote><pre>
+ * public class JobTest extends JobDriver {
+ *   private static final String LABELS = new String[] { "label", "value" };
+ *   public void test()
+ *       throws IOException, InstantiationException,
+ *              IllegalAccessException, ClassNotFoundException {
+ *     addJob(LABELS, StringUtil.TAB, false).setFilter(TestFilter.class)
+ *                                          .setSummaizer(TestSummarizer.class);
+ *
+ *     List<String> input = new ArrayList<String>();
+ *     input.add("label\t1");
+ *     input.add("label\t2");
+ *     input.add("label\t3");
+ *
+ *     List<Record> output = new ArrayList<Record>();
+ *     Record record = new Record();
+ *     record.addGrouping("label", "label");
+ *     record.addValue("value", 6);
+ *     output.add(record);
+ *
+ *     run(input, output, true);
+ *   }
+ * }
+ * </pre></blockquote></p>
  */
 public abstract class JobDriver extends SimpleJobTool {
     private static final String OUTPUT = "(%s, %s)";
@@ -55,10 +81,10 @@ public abstract class JobDriver extends SimpleJobTool {
     }
 
     /**
-     *
-     * @param input
-     * @param output
-     * @param stdout
+     * Run the test with this method.
+     * @param input input {@link String} {@link List} or {@link Record} {@link List}
+     * @param output result of {@link Record} {@link List}
+     * @param stdout whether to output the execution results to stdout.
      * @throws InstantiationException
      * @throws IllegalAccessException
      * @throws ClassNotFoundException
