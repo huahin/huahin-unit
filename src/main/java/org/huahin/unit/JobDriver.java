@@ -91,7 +91,7 @@ public abstract class JobDriver extends SimpleJobTool {
      * @throws IOException
      */
     @SuppressWarnings("unchecked")
-    public void run(List<? extends Object> input, List<Record> output, boolean stdout)
+    public void run(List<?> input, List<Record> output, boolean stdout)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
         if (input == null || input.isEmpty()) {
             fail("input is empty");
