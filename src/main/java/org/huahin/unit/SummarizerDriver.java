@@ -45,7 +45,7 @@ import org.junit.Before;
  *     output.addGrouping("label", "label");
  *     output.addValue("value", 1);
  *
- *     run(input, Arrays.asList(output));
+ *     run(Arrays.asList(input), Arrays.asList(output));
  *   }
  *
  *   public Summarizer getSummarizer() {
