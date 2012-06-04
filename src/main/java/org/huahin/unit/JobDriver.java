@@ -27,6 +27,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
@@ -139,7 +140,7 @@ public abstract class JobDriver extends SimpleJobTool {
         boolean first = true;
         List<Pair<Key, Value>> actual = null;
 
-        for (SimpleJob job : sequencalJobChain.getJobs()) {
+        for (Job job : sequencalJobChain.getJobs()) {
             MapReduceDriver<Writable, Writable, Key, Value, Key, Value> driver = createDriver(job, false);
 
             if (first) {
@@ -173,7 +174,7 @@ public abstract class JobDriver extends SimpleJobTool {
         boolean first = true;
         List<Pair<Key, Value>> actual = null;
 
-        for (SimpleJob job : sequencalJobChain.getJobs()) {
+        for (Job job : sequencalJobChain.getJobs()) {
             MapReduceDriver<Writable, Writable, Key, Value, Key, Value> driver = createDriver(job, true);
 
             if (first) {
@@ -202,7 +203,7 @@ public abstract class JobDriver extends SimpleJobTool {
      * @throws ClassNotFoundException
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private MapReduceDriver<Writable, Writable, Key, Value, Key, Value> createDriver(SimpleJob job, boolean record)
+    private MapReduceDriver<Writable, Writable, Key, Value, Key, Value> createDriver(Job job, boolean record)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
         if (record) {
             job.getConfiguration().setBoolean(SimpleJob.FIRST, false);
