@@ -66,15 +66,11 @@ public class JobDriverSortTest extends JobDriver {
         }
 
         @Override
-        public boolean summarizer(Record record, Writer writer)
+        public void summarizer(Writer writer)
                 throws IOException, InterruptedException {
-            writer.write(record);
-            return false;
-        }
-
-        @Override
-        public void end(Record record, Writer writer)
-                throws IOException, InterruptedException {
+            while (hasNext()) {
+                writer.write(next(writer));
+            }
         }
 
         @Override

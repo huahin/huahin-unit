@@ -63,27 +63,23 @@ public class JobDriverMultiJobTest extends JobDriver {
     }
 
     public static class TestSummarizer extends Summarizer {
-        private int count;
-
         @Override
         public void init() {
-            count = 0;
         }
 
         @Override
-        public boolean summarizer(Record record, Writer writer)
+        public void summarizer(Writer writer)
                 throws IOException, InterruptedException {
-            count += record.getValueInteger(LABEL_VALUE);
-            return false;
-        }
+            int count = 0;
+            while (hasNext()) {
+                Record record = next(writer);
+                count += record.getValueInteger(LABEL_VALUE);
+            }
 
-        @Override
-        public void end(Record record, Writer writer)
-                throws IOException, InterruptedException {
             Record emitRecord = new Record();
-            emitRecord.addGrouping(COLUMN_A, record.getGroupingString(COLUMN_A));
+            emitRecord.addGrouping(COLUMN_A, getGroupingRecord().getGroupingString(COLUMN_A));
             emitRecord.addSort(count, Record.SORT_LOWER, 1);
-            emitRecord.addValue(LABEL_COLUMN, record.getGroupingString(LABEL_COLUMN));
+            emitRecord.addValue(LABEL_COLUMN, getGroupingRecord().getGroupingString(LABEL_COLUMN));
             emitRecord.addValue(LABEL_VALUE, count);
             writer.write(emitRecord);
         }
@@ -99,15 +95,11 @@ public class JobDriverMultiJobTest extends JobDriver {
         }
 
         @Override
-        public boolean summarizer(Record record, Writer writer)
+        public void summarizer(Writer writer)
                 throws IOException, InterruptedException {
-            writer.write(record);
-            return false;
-        }
-
-        @Override
-        public void end(Record record, Writer writer)
-                throws IOException, InterruptedException {
+            while (hasNext()) {
+                writer.write(next(writer));
+            }
         }
 
         @Override

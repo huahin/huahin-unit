@@ -36,29 +36,23 @@ public class SummarizerDriverSomeWriteTest extends SummarizerDriver {
     private static final String COLUMN_A = "A";
 
     private static class TestEndSummarizer extends Summarizer {
-        private int count;
-
         @Override
         public void init() {
-            count = 0;
         }
 
         @Override
-        public boolean summarizer(Record record, Writer writer)
+        public void summarizer(Writer writer)
                 throws IOException, InterruptedException {
-            if (count > 2) {
-                return true;
+            int count = 0;
+            while (hasNext()) {
+                Record record = next(writer);
+                if (count > 2) {
+                    break;
+                }
+
+                writer.write(record);
+                count++;
             }
-
-            writer.write(record);
-
-            count++;
-            return false;
-        }
-
-        @Override
-        public void end(Record record, Writer writer)
-                throws IOException, InterruptedException {
         }
 
         @Override

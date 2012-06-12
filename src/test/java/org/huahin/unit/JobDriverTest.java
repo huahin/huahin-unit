@@ -67,23 +67,19 @@ public class JobDriverTest extends JobDriver {
     }
 
     public static class TestSummarizer extends Summarizer {
-        private int count;
-
         @Override
         public void init() {
-            count = 0;
         }
 
         @Override
-        public boolean summarizer(Record record, Writer writer)
+        public void summarizer(Writer writer)
                 throws IOException, InterruptedException {
-            count += record.getValueInteger(LABEL_VALUE);
-            return false;
-        }
+            int count = 0;
+            while (hasNext()) {
+                Record record = next(writer);
+                count += record.getValueInteger(LABEL_VALUE);
+            }
 
-        @Override
-        public void end(Record record, Writer writer)
-                throws IOException, InterruptedException {
             Record emitRecord = new Record();
             emitRecord.addValue(LABEL_VALUE, count);
             writer.write(emitRecord);
