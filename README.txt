@@ -26,7 +26,7 @@ public class TestFilter extends Filter {
 }
 
 public class FilterTest extends FilterDriver {
-private static final String LABELS = new String[] { "label", "value" };
+  private static final String LABELS = new String[] { "label", "value" };
   // first time filter test
   public void testString() {
      String input = "label\t1";
