@@ -15,22 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.huahin.unit;
+package org.huahinframework.unit;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import org.huahin.core.Summarizer;
-import org.huahin.core.Writer;
-import org.huahin.core.io.Record;
+import org.huahinframework.core.Summarizer;
+import org.huahinframework.core.Writer;
+import org.huahinframework.core.io.Record;
+import org.huahinframework.unit.SummarizerDriver;
 import org.junit.Test;
 
 /**
  *
  */
-public class SummarizerDriverTest extends SummarizerDriver {
+public class SummarizerDriverSomeWriteTest extends SummarizerDriver {
     private static final String LABEL_COLUMN = "COLUMN";
     private static final String LABEL_VALUE = "VALUE";
 
@@ -45,16 +45,15 @@ public class SummarizerDriverTest extends SummarizerDriver {
         public void summarizer(Writer writer)
                 throws IOException, InterruptedException {
             int count = 0;
-
             while (hasNext()) {
                 Record record = next(writer);
-                count += record.getValueInteger(LABEL_VALUE);
+                if (count > 2) {
+                    break;
+                }
+
+                writer.write(record);
+                count++;
             }
-
-            Record emitRecord = new Record();
-            emitRecord.addValue(LABEL_VALUE, count);
-            writer.write(emitRecord);
-
         }
 
         @Override
@@ -72,11 +71,12 @@ public class SummarizerDriverTest extends SummarizerDriver {
             input.add(r);
         }
 
-        Record output = new Record();
-        output.addGrouping(LABEL_COLUMN, COLUMN_A);
-        output.addValue(LABEL_VALUE, 70);
+        List<Record> output = new ArrayList<Record>();
+        for (int i = 0; i < 3; i++) {
+            output.add(input.get(i));
+        }
 
-        run(input, Arrays.asList(output));
+        run(input, output);
     }
 
     @Override

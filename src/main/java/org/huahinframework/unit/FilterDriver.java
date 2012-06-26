@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.huahin.unit;
+package org.huahinframework.unit;
 
 import java.util.List;
 
@@ -25,12 +25,12 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
-import org.huahin.core.DataFormatException;
-import org.huahin.core.Filter;
-import org.huahin.core.SimpleJob;
-import org.huahin.core.io.Key;
-import org.huahin.core.io.Record;
-import org.huahin.core.io.Value;
+import org.huahinframework.core.DataFormatException;
+import org.huahinframework.core.Filter;
+import org.huahinframework.core.SimpleJob;
+import org.huahinframework.core.io.Key;
+import org.huahinframework.core.io.Record;
+import org.huahinframework.core.io.Value;
 import org.junit.Before;
 
 /**

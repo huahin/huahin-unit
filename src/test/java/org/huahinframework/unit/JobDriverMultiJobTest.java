@@ -15,23 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.huahin.unit;
+package org.huahinframework.unit;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.huahin.core.Filter;
-import org.huahin.core.Summarizer;
-import org.huahin.core.Writer;
-import org.huahin.core.io.Record;
-import org.huahin.core.util.StringUtil;
+import org.huahinframework.core.Filter;
+import org.huahinframework.core.Summarizer;
+import org.huahinframework.core.Writer;
+import org.huahinframework.core.io.Record;
+import org.huahinframework.core.util.StringUtil;
+import org.huahinframework.unit.JobDriver;
 import org.junit.Test;
 
 /**
  *
  */
-public class JobDriverTest extends JobDriver {
+public class JobDriverMultiJobTest extends JobDriver {
     private static final String LABEL_COLUMN = "COLUMN";
     private static final String LABEL_VALUE = "VALUE";
 
@@ -45,15 +46,11 @@ public class JobDriverTest extends JobDriver {
         @Override
         public void filter(Record record, Writer writer)
                 throws IOException, InterruptedException {
-            String column = record.getValueString(LABEL_COLUMN);
-            if (column.equals(COLUMN_C)) {
-                return;
-            }
-
             Record emitRecord = new Record();
-            emitRecord.addGrouping(LABEL_COLUMN, column);
-            emitRecord.addValue(LABEL_VALUE,
-                                Integer.valueOf(record.getValueString(LABEL_VALUE)));
+            emitRecord.addGrouping(COLUMN_A, COLUMN_A);
+            emitRecord.addGrouping(LABEL_COLUMN, record.getValueString(LABEL_COLUMN));
+            emitRecord.addValue(LABEL_COLUMN, record.getValueString(LABEL_COLUMN));
+            emitRecord.addValue(LABEL_VALUE, Integer.valueOf(record.getValueString(LABEL_VALUE)));
             writer.write(emitRecord);
         }
 
@@ -81,8 +78,29 @@ public class JobDriverTest extends JobDriver {
             }
 
             Record emitRecord = new Record();
+            emitRecord.addGrouping(COLUMN_A, getGroupingRecord().getGroupingString(COLUMN_A));
+            emitRecord.addSort(count, Record.SORT_LOWER, 1);
+            emitRecord.addValue(LABEL_COLUMN, getGroupingRecord().getGroupingString(LABEL_COLUMN));
             emitRecord.addValue(LABEL_VALUE, count);
             writer.write(emitRecord);
+        }
+
+        @Override
+        public void summarizerSetup() {
+        }
+    }
+
+    public static class TestWriteSummarizer extends Summarizer {
+        @Override
+        public void init() {
+        }
+
+        @Override
+        public void summarizer(Writer writer)
+                throws IOException, InterruptedException {
+            while (hasNext()) {
+                writer.write(next(writer));
+            }
         }
 
         @Override
@@ -96,24 +114,34 @@ public class JobDriverTest extends JobDriver {
         addJob(LABELS, StringUtil.TAB, false).setFilter(TestFilter.class)
                                              .setSummaizer(TestSummarizer.class);
 
+        addJob().setSummaizer(TestWriteSummarizer.class);
+
         List<String> input = new ArrayList<String>();
         input.add(COLUMN_A + StringUtil.TAB + 1);
         input.add(COLUMN_A + StringUtil.TAB + 2);
         input.add(COLUMN_A + StringUtil.TAB + 3);
         input.add(COLUMN_B + StringUtil.TAB + 1);
-        input.add(COLUMN_B + StringUtil.TAB + 2);
         input.add(COLUMN_C + StringUtil.TAB + 1);
+        input.add(COLUMN_C + StringUtil.TAB + 2);
 
         List<Record> output = new ArrayList<Record>();
         Record r1 = new Record();
-        r1.addGrouping(LABEL_COLUMN, COLUMN_A);
-        r1.addValue(LABEL_VALUE, 6);
+        r1.addGrouping(COLUMN_A, COLUMN_A);
+        r1.addValue(LABEL_COLUMN, COLUMN_B);
+        r1.addValue(LABEL_VALUE, 1);
         output.add(r1);
 
         Record r2 = new Record();
-        r2.addGrouping(LABEL_COLUMN, COLUMN_B);
+        r2.addGrouping(COLUMN_A, COLUMN_A);
+        r2.addValue(LABEL_COLUMN, COLUMN_C);
         r2.addValue(LABEL_VALUE, 3);
         output.add(r2);
+
+        Record r3 = new Record();
+        r3.addGrouping(COLUMN_A, COLUMN_A);
+        r3.addValue(LABEL_COLUMN, COLUMN_A);
+        r3.addValue(LABEL_VALUE, 6);
+        output.add(r3);
 
         run(input, output, true);
     }

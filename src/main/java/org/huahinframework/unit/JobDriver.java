@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.huahin.unit;
+package org.huahinframework.unit;
 
 import static org.junit.Assert.*;
 
@@ -32,12 +32,12 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
-import org.huahin.core.SimpleJob;
-import org.huahin.core.SimpleJobTool;
-import org.huahin.core.io.Key;
-import org.huahin.core.io.Record;
-import org.huahin.core.io.Value;
-import org.huahin.core.util.StringUtil;
+import org.huahinframework.core.SimpleJob;
+import org.huahinframework.core.SimpleJobTool;
+import org.huahinframework.core.io.Key;
+import org.huahinframework.core.io.Record;
+import org.huahinframework.core.io.Value;
+import org.huahinframework.core.util.StringUtil;
 import org.junit.Before;
 
 /**

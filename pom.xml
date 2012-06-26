@@ -19,14 +19,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.huahin</groupId>
+  <groupId>org.huahinframework</groupId>
   <artifactId>huahin-unit</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
   <description>Huahin Unit is a unit test driver for Huahin MapReduce programs for use with JUnit and MRUnit.</description>
 
   <name>huahin-unit</name>
-  <url>http://huahin.github.com/huahin-unit/</url>
+  <url>http://huahinframework.org/huahin-unit/</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -93,7 +93,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.huahin</groupId>
+      <groupId>org.huahinframework</groupId>
       <artifactId>huahin-core</artifactId>
       <version>0.1.0</version>
     </dependency>
