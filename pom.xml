@@ -20,7 +20,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.huahinframework</groupId>
   <artifactId>huahin-unit</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <description>Huahin Unit is a unit test driver for Huahin MapReduce programs for use with JUnit and MRUnit.</description>
 
@@ -39,6 +39,21 @@
     <connection>scm:git:git@github.com:huahin/huahin-unit.git</connection>
     <developerConnection>scm:git:git@github.com:huahin/huahin-unit.git</developerConnection>
   </scm>
+
+  <developers>
+    <developer>
+      <id>ryu</id>
+      <name>Ryu Kobayashi</name>
+      <email>beter.max@gmail.com</email>
+      <url>http://beter-max.blogspot.com/</url>
+      <roles>
+        <role>lead</role>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+      <timezone>+9</timezone>
+    </developer>
+  </developers>
 
   <mailingLists>
     <mailingList>
