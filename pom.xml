@@ -21,7 +21,7 @@
   <groupId>org.huahinframework</groupId>
   <artifactId>huahin-unit</artifactId>
   <version>0.1.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
   <description>Huahin Unit is a unit test driver for Huahin MapReduce programs for use with JUnit and MRUnit.</description>
 
   <name>huahin-unit</name>
