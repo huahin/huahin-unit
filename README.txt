@@ -21,9 +21,12 @@ Or, get the source code.
 git clone git://github.com/huahin/huahin-unit.git
 
 
+<<<<<<< HEAD
 -----------------------------------------------------------------------------
 Test
 
+=======
+>>>>>>> 7d9410dd596b75228f9230c789512d93cb29c32f
 All of Huahin Unit test run using the run method.
 
 To test the Filter will inherit the FilterDriver. Set the Filter you want to test getFilter.
