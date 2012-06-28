@@ -5,6 +5,25 @@ Writing Huahin Unit Test cases
 Huahin Unit testing framework is based on Junit and MRUnit and it can test
 MapReduce programs written on 0.20.x, 0.22.x, 1.0.x version of Hadoop
 
+-----------------------------------------------------------------------------
+Install
+
+Gets the jar using maven.
+
+<dependency>
+  <groupId>org.huahinframework</groupId>
+  <artifactId>huahin-unit</artifactId>
+  <version>x.x.x</version>
+</dependency>
+
+Or, get the source code.
+
+git clone git://github.com/huahin/huahin-unit.git
+
+
+-----------------------------------------------------------------------------
+Test
+
 All of Huahin Unit test run using the run method.
 
 To test the Filter will inherit the FilterDriver. Set the Filter you want to test getFilter.
