@@ -89,7 +89,7 @@ public class TestSummarizer extends Summarizer {
   }
 
   @Override
-  public boolean summarizer(Record record, Writer writer)
+  public boolean summarize(Record record, Writer writer)
       throws IOException, InterruptedException {
     count += record.getValueInteger(LABEL_VALUE);
     return false;

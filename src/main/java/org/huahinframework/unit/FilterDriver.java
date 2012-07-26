@@ -20,9 +20,6 @@ package org.huahinframework.unit;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.huahinframework.core.DataFormatException;
@@ -31,6 +28,7 @@ import org.huahinframework.core.SimpleJob;
 import org.huahinframework.core.io.Key;
 import org.huahinframework.core.io.Record;
 import org.huahinframework.core.io.Value;
+import org.huahinframework.core.util.StringUtil;
 import org.junit.Before;
 
 /**
@@ -70,8 +68,8 @@ import org.junit.Before;
  * </pre></blockquote></p>
  */
 public abstract class FilterDriver {
-    private Mapper<Writable, Writable, Key, Value> mapper;
-    private MapDriver<Writable, Writable, Key, Value> driver;
+    private Mapper<Key, Value, Key, Value> mapper;
+    private MapDriver<Key, Value, Key, Value> driver;
 
     /**
      * @throws java.lang.Exception
@@ -79,7 +77,7 @@ public abstract class FilterDriver {
     @Before
     public void setUp() throws Exception {
         mapper = getFilter();
-        driver = new MapDriver<Writable, Writable, Key, Value>(mapper);
+        driver = new MapDriver<Key, Value, Key, Value>(mapper);
     }
 
     /**
@@ -110,20 +108,44 @@ public abstract class FilterDriver {
      * If false is ignored (default).
      * @param input input {@link String} data
      * @param output result of {@link Record} {@link List}
+     * @throws DataFormatException
      */
     public void run(String[] labels,
                     String separator,
                     boolean formatIgnored,
                     String input,
-                    List<Record> output) {
+                    List<Record> output) throws DataFormatException {
         Configuration conf = new Configuration();
         conf.setStrings(SimpleJob.LABELS, labels);
         conf.set(SimpleJob.SEPARATOR, separator);
-        conf.setBoolean(SimpleJob.FIRST, true);
         conf.setBoolean(SimpleJob.FORMAT_IGNORED, formatIgnored);
         driver.setConfiguration(conf);
 
-        driver.withInput(new LongWritable(1L), new Text(input));
+        separator = separator == null ? StringUtil.COMMA : separator;
+
+        Key key = new Key();
+        key.addPrimitiveValue("KEY", 1L);
+        Value value = new Value();
+        String[] strings = StringUtil.split(input, separator, false);
+        if (labels != null) {
+            if (labels.length != strings.length) {
+                if (formatIgnored) {
+                    throw new DataFormatException("input format error: " +
+                                                  "label.length = " + labels.length +
+                                                  "input.lenght = " + strings.length);
+                }
+            }
+
+            for (int i = 0; i < strings.length; i++) {
+                value.addPrimitiveValue(labels[i], strings[i]);
+            }
+        } else {
+            for (int i = 0; i < strings.length; i++) {
+                value.addPrimitiveValue(String.valueOf(i), strings[i]);
+            }
+        }
+
+        driver.withInput(key, value);
 
         if (output != null) {
             for (Record r : output) {

@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.huahinframework.core.Summarizer;
-import org.huahinframework.core.Writer;
 import org.huahinframework.core.io.Record;
+import org.huahinframework.core.writer.Writer;
 import org.huahinframework.unit.SummarizerDriver;
 import org.junit.Test;
 
@@ -42,7 +42,7 @@ public class SummarizerDriverSomeWriteTest extends SummarizerDriver {
         }
 
         @Override
-        public void summarizer(Writer writer)
+        public void summarize(Writer writer)
                 throws IOException, InterruptedException {
             int count = 0;
             while (hasNext()) {

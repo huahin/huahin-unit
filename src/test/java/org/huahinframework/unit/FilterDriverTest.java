@@ -20,10 +20,11 @@ package org.huahinframework.unit;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.huahinframework.core.DataFormatException;
 import org.huahinframework.core.Filter;
-import org.huahinframework.core.Writer;
 import org.huahinframework.core.io.Record;
 import org.huahinframework.core.util.StringUtil;
+import org.huahinframework.core.writer.Writer;
 import org.huahinframework.unit.FilterDriver;
 import org.junit.Test;
 
@@ -64,7 +65,7 @@ public class FilterDriverTest extends FilterDriver {
     }
 
     @Test
-    public void testFirstHit() {
+    public void testFirstHit() throws DataFormatException {
         String input = COLUMN_A + StringUtil.TAB + 1;
 
         Record output = new Record();
@@ -75,7 +76,7 @@ public class FilterDriverTest extends FilterDriver {
     }
 
     @Test
-    public void testFirstNotHit() {
+    public void testFirstNotHit() throws DataFormatException {
         String input = COLUMN_B + StringUtil.TAB + 1;
         run(LABELS, StringUtil.TAB, false, input, null);
     }

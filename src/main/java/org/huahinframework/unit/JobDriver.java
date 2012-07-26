@@ -23,15 +23,13 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.RawComparator;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
+import org.huahinframework.core.DataFormatException;
 import org.huahinframework.core.SimpleJob;
 import org.huahinframework.core.SimpleJobTool;
 import org.huahinframework.core.io.Key;
@@ -141,12 +139,40 @@ public abstract class JobDriver extends SimpleJobTool {
         List<Pair<Key, Value>> actual = null;
 
         for (Job job : sequencalJobChain.getJobs()) {
-            MapReduceDriver<Writable, Writable, Key, Value, Key, Value> driver = createDriver(job, false);
+            MapReduceDriver<Key, Value, Key, Value, Key, Value> driver = createDriver(job, false);
 
             if (first) {
-                final LongWritable one = new LongWritable(1L);
+                boolean formatIgnored =
+                        sequencalJobChain.getJobs().get(0).getConfiguration().getBoolean(SimpleJob.FORMAT_IGNORED, false);
+                String[] labels =
+                        sequencalJobChain.getJobs().get(0).getConfiguration().getStrings(SimpleJob.LABELS);
+                String separator =
+                        sequencalJobChain.getJobs().get(0).getConfiguration().get(SimpleJob.SEPARATOR, StringUtil.COMMA);
+
                 for (String s : input) {
-                    driver.addInput(one, new Text(s));
+                    Key key = new Key();
+                    key.addPrimitiveValue("KEY", 1L);
+                    Value value = new Value();
+                    String[] strings = StringUtil.split(s, separator, false);
+                    if (labels != null) {
+                        if (labels.length != strings.length) {
+                            if (formatIgnored) {
+                                throw new DataFormatException("input format error: " +
+                                                              "label.length = " + labels.length +
+                                                              "input.lenght = " + strings.length);
+                            }
+                        }
+
+                        for (int i = 0; i < strings.length; i++) {
+                            value.addPrimitiveValue(labels[i], strings[i]);
+                        }
+                    } else {
+                        for (int i = 0; i < strings.length; i++) {
+                            value.addPrimitiveValue(String.valueOf(i), strings[i]);
+                        }
+                    }
+
+                    driver.addInput(key, value);
                 }
                 first = false;
             } else {
@@ -175,7 +201,7 @@ public abstract class JobDriver extends SimpleJobTool {
         List<Pair<Key, Value>> actual = null;
 
         for (Job job : sequencalJobChain.getJobs()) {
-            MapReduceDriver<Writable, Writable, Key, Value, Key, Value> driver = createDriver(job, true);
+            MapReduceDriver<Key, Value, Key, Value, Key, Value> driver = createDriver(job, true);
 
             if (first) {
                 for (Record r : input) {
@@ -203,16 +229,13 @@ public abstract class JobDriver extends SimpleJobTool {
      * @throws ClassNotFoundException
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private MapReduceDriver<Writable, Writable, Key, Value, Key, Value> createDriver(Job job, boolean record)
+    private MapReduceDriver<Key, Value, Key, Value, Key, Value> createDriver(Job job, boolean record)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        if (record) {
-            job.getConfiguration().setBoolean(SimpleJob.FIRST, false);
-        }
         Mapper mapper = job.getMapperClass().newInstance();
         Reducer reducer = job.getReducerClass().newInstance();
         RawComparator groupingComparator = job.getGroupingComparator();
         RawComparator sortComparator = job.getSortComparator();
-        MapReduceDriver<Writable, Writable, Key, Value, Key, Value> driver =
+        MapReduceDriver<Key, Value, Key, Value, Key, Value> driver =
                 MapReduceDriver.newMapReduceDriver(mapper, reducer)
                                .withKeyGroupingComparator(groupingComparator)
                                .withKeyOrderComparator(sortComparator);

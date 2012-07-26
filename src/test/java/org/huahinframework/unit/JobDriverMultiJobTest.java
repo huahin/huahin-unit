@@ -23,9 +23,9 @@ import java.util.List;
 
 import org.huahinframework.core.Filter;
 import org.huahinframework.core.Summarizer;
-import org.huahinframework.core.Writer;
 import org.huahinframework.core.io.Record;
 import org.huahinframework.core.util.StringUtil;
+import org.huahinframework.core.writer.Writer;
 import org.huahinframework.unit.JobDriver;
 import org.junit.Test;
 
@@ -69,7 +69,7 @@ public class JobDriverMultiJobTest extends JobDriver {
         }
 
         @Override
-        public void summarizer(Writer writer)
+        public void summarize(Writer writer)
                 throws IOException, InterruptedException {
             int count = 0;
             while (hasNext()) {
@@ -96,7 +96,7 @@ public class JobDriverMultiJobTest extends JobDriver {
         }
 
         @Override
-        public void summarizer(Writer writer)
+        public void summarize(Writer writer)
                 throws IOException, InterruptedException {
             while (hasNext()) {
                 writer.write(next(writer));
