@@ -138,7 +138,7 @@ public class JobTest extends JobDriver {
     throws IOException, InstantiationException,
            IllegalAccessException, ClassNotFoundException {
     addJob(LABELS, StringUtil.TAB, false).setFilter(TestFilter.class)
-                                         .setSummaizer(TestSummarizer.class);
+                                         .setSummarizer(TestSummarizer.class);
 
     List<String> input = new ArrayList<String>();
     input.add("label\t1");

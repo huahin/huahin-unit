@@ -83,7 +83,7 @@ public class JobDriverSortTest extends JobDriver {
     public void test()
             throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
         addJob().setFilter(TestFilter.class)
-                .setSummaizer(TestSummarizer.class);
+                .setSummarizer(TestSummarizer.class);
 
         Record r1 = new Record();
         r1.addGrouping(LABEL_COLUMN, COLUMN_A);

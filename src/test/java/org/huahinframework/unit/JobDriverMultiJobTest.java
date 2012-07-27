@@ -112,9 +112,9 @@ public class JobDriverMultiJobTest extends JobDriver {
     public void test()
             throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
         addJob(LABELS, StringUtil.TAB, false).setFilter(TestFilter.class)
-                                             .setSummaizer(TestSummarizer.class);
+                                             .setSummarizer(TestSummarizer.class);
 
-        addJob().setSummaizer(TestWriteSummarizer.class);
+        addJob().setSummarizer(TestWriteSummarizer.class);
 
         List<String> input = new ArrayList<String>();
         input.add(COLUMN_A + StringUtil.TAB + 1);
