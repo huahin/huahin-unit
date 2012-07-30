@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Huahin-unit : Huahin Unit is a unit test driver for Huahin MapReduce programs for use with JUnit and MRUnit." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Huahin-unit</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/huahin/huahin-unit">View on GitHub</a>
+
+          <h1 id="project_title">Huahin-unit</h1>
+          <h2 id="project_tagline">Huahin Unit is a unit test driver for Huahin MapReduce programs for use with JUnit and MRUnit.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/huahin/huahin-unit/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/huahin/huahin-unit/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>Huahin Unit</h2>
+
+<p>Huahin Unit is a unit test driver for Huahin MapReduce programs for use with JUnit and MRUnit.</p>
+
+<p>Writing Huahin Unit Test cases</p>
+
+<p>Huahin Unit testing framework is based on Junit and MRUnit and it can test
+MapReduce programs written on 0.20.x, 0.22.x, 1.0.x version of Hadoop</p>
+
+<h2>Releases</h2>
+
+<p>current version is 0.1.1.</p>
+
+<h4>30 July, 2012: Release 0.1.1 available</h4>
+
+<ul>
+<li>update: supports the huahin-core 0.1.1</li>
+</ul><h4>28 Jun, 2012: Release 0.1.0 available</h4>
+
+<p>This is the first version.</p>
+
+<h3>Install</h3>
+
+<p>Gets the jar using maven.</p>
+
+<pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.huahinframework&lt;/groupId&gt;
+  &lt;artifactId&gt;huahin-unit&lt;/artifactId&gt;
+  &lt;version&gt;x.x.x&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>Or, get the source code.</p>
+
+<pre><code>git clone git://github.com/huahin/huahin-unit.git
+</code></pre>
+
+<h3>Test</h3>
+
+<p>All of Huahin Unit test run using the run method.</p>
+
+<p>To test the Filter will inherit the FilterDriver. Set the Filter you want to test getFilter.
+Parameters of the run is data that is used to input data and output.</p>
+
+<p>The following example is Filter to get a tab delimited data.
+And in the next test is to output the Record.</p>
+
+<pre><code>public class TestFilter extends Filter {
+  @Override
+  public void filter(Record record, Writer writer)
+      throws IOException, InterruptedException {
+    Record emitRecord = new Record();
+    emitRecord.addGrouping("label", record.getValueString("label"));
+    emitRecord.addValue("value", record.getValueString("value"));
+    writer.write(emitRecord);
+  }
+  ...
+}
+
+public class FilterTest extends FilterDriver {
+  private static final String LABELS = new String[] { "label", "value" };
+  // first time filter test
+  public void testString() {
+     String input = "label\t1";
+
+     Record output = new Record();
+     output.addGrouping("label", "label");
+     output.addValue("value", 1);
+
+     run(LABELS, "\t", false, input, Arrays.asList(output));
+  }
+
+  // any time filter test
+  public void testRecord() {
+    Record input = new Record();
+    input.addValue("label", "label");
+    input.addValue("value", 1);
+
+    Record output = new Record();
+    output.addGrouping("label", "label");
+    output.addValue("value", 1);
+
+    run(input, Arrays.asList(output));
+  }
+
+  @Override
+  public Filter getFilter() {
+    return new TestFilter();
+  }
+}
+</code></pre>
+
+<p>To test the Summarizer will inherit the SummarizerDriver. Set the Summarizer you want to test getSummarizer.
+Parameters of the run is data that is used to input data and output.
+The following Summarizer test is count the number of labels.</p>
+
+<pre><code>public class TestSummarizer extends Summarizer {
+  private int count;
+  @Override
+  public void init() {
+    count = 0;
+  }
+
+  @Override
+  public boolean summarizer(Record record, Writer writer)
+      throws IOException, InterruptedException {
+    count += record.getValueInteger(LABEL_VALUE);
+    return false;
+  }
+
+  @Override
+  public void end(Record record, Writer writer)
+      throws IOException, InterruptedException {
+    Record emitRecord = new Record();
+    emitRecord.addValue(LABEL_VALUE, count);
+    writer.write(emitRecord);
+  }
+}
+
+public class SummarizerTest extends SummarizerDriver {
+  public void test() {
+    Record input1 = new Record();
+    input1.addValue("label", "label");
+    input1.addValue("value", 1);
+
+    Record input2 = new Record();
+    input2.addValue("label", "label");
+    input2.addValue("value", 1);
+
+    Record output = new Record();
+    output.addGrouping("label", "label");
+    output.addValue("value", 2);
+
+    run(Arrays.asList(input1, input2), Arrays.asList(output));
+  }
+
+  public Summarizer getSummarizer() {
+    return new TestSummarizer();
+  }
+}
+</code></pre>
+
+<p>To test the Job will inherit the JobDriver.
+How to use the test is the same as that inherits Tool SimpleJobTool, to run will only use the run method.
+Parameters of the run is data that is used to input data and output.
+And the last parameter is whether to output the results actually executed.</p>
+
+<pre><code>public class JobTest extends JobDriver {
+  private static final String LABELS = new String[] { "label", "value" };
+  public void test()
+    throws IOException, InstantiationException,
+           IllegalAccessException, ClassNotFoundException {
+    addJob(LABELS, StringUtil.TAB, false).setFilter(TestFilter.class)
+                                         .setSummarizer(TestSummarizer.class);
+
+    List&lt;String&gt; input = new ArrayList&lt;String&gt;();
+    input.add("label\t1");
+    input.add("label\t2");
+    input.add("label\t3");
+
+    List&lt;Record&gt; output = new ArrayList&lt;Record&gt;();
+    Record record = new Record();
+    record.addGrouping("label", "label");
+    record.addValue("value", 6);
+    output.add(record);
+
+    run(input, output, true);
+  }
+}
+</code></pre>
+
+<h3>Support or Contact</h3>
+
+<p>Contact <a href="mailto:huahin-framework@googlegroups.com">huahin-framework@googlegroups.com</a> and we’ll help you sort it out.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Huahin-unit maintained by <a href="https://github.com/huahin">huahin</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-32923864-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
