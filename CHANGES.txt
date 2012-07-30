@@ -1,0 +1,1 @@
+update: supports the huahin-core 0.1.1
