@@ -17,7 +17,11 @@
  */
 package org.huahinframework.unit;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -28,6 +32,11 @@ import org.huahinframework.core.SimpleJob;
 import org.huahinframework.core.io.Key;
 import org.huahinframework.core.io.Record;
 import org.huahinframework.core.io.Value;
+import org.huahinframework.core.lib.input.creator.JoinRegexValueCreator;
+import org.huahinframework.core.lib.input.creator.JoinValueCreator;
+import org.huahinframework.core.lib.input.creator.LabelValueCreator;
+import org.huahinframework.core.lib.input.creator.SimpleValueCreator;
+import org.huahinframework.core.lib.input.creator.ValueCreator;
 import org.huahinframework.core.util.StringUtil;
 import org.junit.Before;
 
@@ -70,6 +79,12 @@ import org.junit.Before;
 public abstract class FilterDriver {
     private Mapper<Key, Value, Key, Value> mapper;
     private MapDriver<Key, Value, Key, Value> driver;
+    private String masterSeparator;
+    private String[] masterLabels;
+    private String masterColumn;
+    private String dataColumn;
+    private boolean regex;
+    private List<String> masterData;
 
     /**
      * @throws java.lang.Exception
@@ -122,29 +137,45 @@ public abstract class FilterDriver {
         driver.setConfiguration(conf);
 
         separator = separator == null ? StringUtil.COMMA : separator;
+        if (masterSeparator == null) {
+            masterSeparator = separator;
+        }
 
         Key key = new Key();
         key.addPrimitiveValue("KEY", 1L);
         Value value = new Value();
         String[] strings = StringUtil.split(input, separator, false);
-        if (labels != null) {
-            if (labels.length != strings.length) {
-                if (formatIgnored) {
-                    throw new DataFormatException("input format error: " +
-                                                  "label.length = " + labels.length +
-                                                  "input.lenght = " + strings.length);
-                }
-            }
 
-            for (int i = 0; i < strings.length; i++) {
-                value.addPrimitiveValue(labels[i], strings[i]);
-            }
+        ValueCreator valueCreator = null;
+        if (labels == null) {
+            valueCreator = new SimpleValueCreator();
         } else {
-            for (int i = 0; i < strings.length; i++) {
-                value.addPrimitiveValue(String.valueOf(i), strings[i]);
+            if (masterData == null) {
+                valueCreator = new LabelValueCreator(labels, formatIgnored);
+            } else {
+                int masterJoinNo = getJoinNo(masterLabels, masterColumn);
+                int dataJoinNo = getJoinNo(labels, dataColumn);
+
+                Map<String, String[]> simpleJoinMap = null;
+                simpleJoinMap =
+                        getSimpleMaster(masterData, masterJoinNo, masterSeparator);
+                if (regex) {
+                    Map<Pattern, String[]> simpleJoinRegexMap = new HashMap<Pattern, String[]>();
+                    for (Entry<String, String[]> entry : simpleJoinMap.entrySet()) {
+                        Pattern p = Pattern.compile(entry.getKey());
+                        simpleJoinRegexMap.put(p, entry.getValue());
+                    }
+                    valueCreator =
+                            new JoinRegexValueCreator(labels, formatIgnored, masterLabels,
+                                                     masterJoinNo, dataJoinNo, simpleJoinRegexMap);
+                } else {
+                    valueCreator = new JoinValueCreator(labels, formatIgnored, masterLabels,
+                                                        masterJoinNo, dataJoinNo, simpleJoinMap);
+                }
             }
         }
 
+        valueCreator.create(strings, value);
         driver.withInput(key, value);
 
         if (output != null) {
@@ -154,6 +185,97 @@ public abstract class FilterDriver {
         }
 
         driver.runTest();
+    }
+
+    /**
+     * Easily supports the Join. To use the setSimpleJoin,
+     * you must be a size master data appear in the memory of the task.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterData master data
+     */
+    protected void setSimpleJoin(String[] masterLabels, String masterColumn,
+                                 String dataColumn, List<String> masterData) {
+        masterSeparator = null;
+        setSimpleJoin(masterLabels, masterColumn, dataColumn, masterSeparator, false, masterData);
+    }
+
+    /**
+     * Easily supports the Join. To use the setSimpleJoin,
+     * you must be a size master data appear in the memory of the task.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param regex master join is regex;
+     * @param masterData master data
+     */
+    protected void setSimpleJoin(String[] masterLabels, String masterColumn,
+                                 String dataColumn, boolean regex, List<String> masterData) {
+        masterSeparator = null;
+        setSimpleJoin(masterLabels, masterColumn, dataColumn, masterSeparator, regex, masterData);
+    }
+
+    /**
+     * Easily supports the Join. To use the setSimpleJoin,
+     * you must be a size master data appear in the memory of the task.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterSeparator separator
+     * @param regex master join is regex
+     * @param masterData master data
+     */
+    protected void setSimpleJoin(String[] masterLabels, String masterColumn, String dataColumn,
+                                 String masterSeparator, boolean regex, List<String> masterData) {
+        this.masterLabels = masterLabels;
+        this.masterColumn = masterColumn;
+        this.dataColumn = dataColumn;
+        this.masterSeparator = masterSeparator;
+        this.regex = regex;
+        this.masterData = masterData;
+    }
+
+    /**
+     * get join column number
+     * @param labels label's
+     * @param join join column
+     * @return join column number
+     */
+    private int getJoinNo(String[] labels, String join) {
+        for (int i = 0; i < labels.length; i++) {
+            if (join.equals(labels[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @param masterData
+     * @param joinColumnNo
+     * @param masterSeparator
+     * @return master map
+     */
+    private Map<String, String[]> getSimpleMaster(List<String> masterData,
+                                                  int joinColumnNo,
+                                                  String separator) {
+        Map<String, String[]> m = new HashMap<String, String[]>();
+        for (String line : masterData) {
+            String[] strings = StringUtil.split(line, separator, false);
+            if (masterLabels.length != strings.length) {
+                continue;
+            }
+
+            String joinData = strings[joinColumnNo];
+            String[] data = new String[strings.length];
+            for (int i = 0; i < strings.length; i++) {
+                data[i] = strings[i];
+            }
+
+            m.put(joinData, data);
+        }
+        return m;
     }
 
     /**
