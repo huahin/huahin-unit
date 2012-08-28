@@ -24,6 +24,9 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.huahinframework.core.DataFormatException;
@@ -77,8 +80,13 @@ import org.junit.Before;
  * </pre></blockquote></p>
  */
 public abstract class FilterDriver {
-    private Mapper<Key, Value, Key, Value> mapper;
-    private MapDriver<Key, Value, Key, Value> driver;
+    @SuppressWarnings("rawtypes")
+    private Mapper<Key, Value, WritableComparable, Writable> mapper;
+
+    @SuppressWarnings("rawtypes")
+    private MapDriver<Key, Value, WritableComparable, Writable> driver;
+
+    private Configuration conf;
     private String masterSeparator;
     private String[] masterLabels;
     private String masterColumn;
@@ -89,10 +97,12 @@ public abstract class FilterDriver {
     /**
      * @throws java.lang.Exception
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Before
     public void setUp() throws Exception {
-        mapper = getFilter();
-        driver = new MapDriver<Key, Value, Key, Value>(mapper);
+        mapper = (Mapper) getFilter();
+        driver = new MapDriver<Key, Value, WritableComparable, Writable>(mapper);
+        conf = new Configuration();
     }
 
     /**
@@ -116,6 +126,36 @@ public abstract class FilterDriver {
     /**
      * Run the test with this method.
      * The data is input for the {@link String}.
+     * @param separator separator of data
+     * @param input input {@link String} data
+     * @param output result of {@link Record} {@link List}
+     * @throws DataFormatException
+     */
+    protected void run(String separator,
+                       String input,
+                       List<Record> output) throws DataFormatException {
+        run(null, separator, false, input, output);
+    }
+
+    /**
+     * Run the test with this method.
+     * The data is input for the {@link String}.
+     * @param labels label of input data
+     * @param separator separator of data
+     * @param input input {@link String} data
+     * @param output result of {@link Record} {@link List}
+     * @throws DataFormatException
+     */
+    protected void run(String[] labels,
+                       String separator,
+                       String input,
+                       List<Record> output) throws DataFormatException {
+        run(labels, separator, false, input, output);
+    }
+
+    /**
+     * Run the test with this method.
+     * The data is input for the {@link String}.
      * @param labels label of input data
      * @param separator separator of data
      * @param formatIgnored
@@ -130,9 +170,89 @@ public abstract class FilterDriver {
                     boolean formatIgnored,
                     String input,
                     List<Record> output) throws DataFormatException {
-        Configuration conf = new Configuration();
-        conf.setStrings(SimpleJob.LABELS, labels);
+        run(labels, separator, false, formatIgnored, input, output);
+    }
+
+    /**
+     * Run the test with this method.
+     * The data is input for the {@link String}.
+     * @param separator regex
+     * @param input input {@link String} data
+     * @param output result of {@link Record} {@link List}
+     * @throws DataFormatException
+     */
+    protected void run(Pattern separator,
+                       String input,
+                       List<Record> output) throws DataFormatException {
+        run(null, separator.pattern(), true, false, input, output);
+    }
+
+    /**
+     * Run the test with this method.
+     * The data is input for the {@link String}.
+     * @param labels label of input data
+     * @param separator regex
+     * @param input input {@link String} data
+     * @param output result of {@link Record} {@link List}
+     * @throws DataFormatException
+     */
+    protected void run(String[] labels,
+                       Pattern separator,
+                       String input,
+                       List<Record> output) throws DataFormatException {
+        run(labels, separator.pattern(), true, false, input, output);
+    }
+
+    /**
+     * Run the test with this method.
+     * The data is input for the {@link String}.
+     * @param labels label of input data
+     * @param separator regex
+     * @param formatIgnored
+     * If true, {@link DataFormatException} will be throw if there is a format error.
+     * If false is ignored (default).
+     * @param input input {@link String} data
+     * @param output result of {@link Record} {@link List}
+     * @throws DataFormatException
+     */
+    public void run(String[] labels,
+                    Pattern separator,
+                    boolean formatIgnored,
+                    String input,
+                    List<Record> output) throws DataFormatException {
+        run(labels, separator.pattern(), true, formatIgnored, input, output);
+    }
+
+    /**
+     * Run the test with this method.
+     * The data is input for the {@link String}.
+     * @param labels label of input data
+     * @param separator separator of data
+     * @param separatorRegex separator is regex
+     * @param formatIgnored
+     * If true, {@link DataFormatException} will be throw if there is a format error.
+     * If false is ignored (default).
+     * @param input input {@link String} data
+     * @param output result of {@link Record} {@link List}
+     * @throws DataFormatException
+     */
+    public void run(String[] labels,
+                    String separator,
+                    boolean separatorRegex,
+                    boolean formatIgnored,
+                    String input,
+                    List<Record> output) throws DataFormatException {
+        if (labels != null) {
+            conf.setStrings(SimpleJob.LABELS, labels);
+        }
+        if (separator == null || separator.isEmpty()) {
+            separator = StringUtil.COMMA;
+        }
+
         conf.set(SimpleJob.SEPARATOR, separator);
+        if (separatorRegex) {
+            conf.setBoolean(SimpleJob.SEPARATOR_REGEX, true);
+        }
         conf.setBoolean(SimpleJob.FORMAT_IGNORED, formatIgnored);
         driver.setConfiguration(conf);
 
@@ -144,14 +264,13 @@ public abstract class FilterDriver {
         Key key = new Key();
         key.addPrimitiveValue("KEY", 1L);
         Value value = new Value();
-        String[] strings = StringUtil.split(input, separator, false);
 
         ValueCreator valueCreator = null;
         if (labels == null) {
-            valueCreator = new SimpleValueCreator();
+            valueCreator = new SimpleValueCreator(separator, separatorRegex);
         } else {
             if (masterData == null) {
-                valueCreator = new LabelValueCreator(labels, formatIgnored);
+                valueCreator = new LabelValueCreator(labels, formatIgnored, separator, separatorRegex);
             } else {
                 int masterJoinNo = getJoinNo(masterLabels, masterColumn);
                 int dataJoinNo = getJoinNo(labels, dataColumn);
@@ -166,21 +285,22 @@ public abstract class FilterDriver {
                         simpleJoinRegexMap.put(p, entry.getValue());
                     }
                     valueCreator =
-                            new JoinRegexValueCreator(labels, formatIgnored, masterLabels,
+                            new JoinRegexValueCreator(labels, formatIgnored, separator, separatorRegex, masterLabels,
                                                      masterJoinNo, dataJoinNo, simpleJoinRegexMap);
                 } else {
-                    valueCreator = new JoinValueCreator(labels, formatIgnored, masterLabels,
+                    valueCreator = new JoinValueCreator(labels, formatIgnored, separator, separatorRegex, masterLabels,
                                                         masterJoinNo, dataJoinNo, simpleJoinMap);
                 }
             }
         }
 
-        valueCreator.create(strings, value);
+        valueCreator.create(input, value);
         driver.withInput(key, value);
 
         if (output != null) {
             for (Record r : output) {
-                driver.withOutput(r.getKey(), r.getValue());
+                driver.withOutput(r.isGroupingNothing() ? NullWritable.get() : r.getKey(),
+                                  r.isValueNothing() ? NullWritable.get() : r.getValue());
             }
         }
 
@@ -276,6 +396,33 @@ public abstract class FilterDriver {
             m.put(joinData, data);
         }
         return m;
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value {@link String} parameter value
+     */
+    protected void setParameter(String name, String value) {
+        conf.set(name, value);
+    }
+
+    /**
+     * parameter setting
+     * @param name parameter name
+     * @param value boolean parameter value
+     */
+    protected void setParameter(String name, boolean value) {
+        conf.setBoolean(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value int parameter value
+     */
+    protected void setParameter(String name, int value) {
+        conf.setInt(name, value);
     }
 
     /**

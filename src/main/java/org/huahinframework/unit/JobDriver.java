@@ -28,6 +28,8 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -104,14 +106,14 @@ public abstract class JobDriver extends SimpleJobTool {
      * @throws ClassNotFoundException
      * @throws IOException
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void run(List<?> input, List<Record> output, boolean stdout)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
         if (input == null || input.isEmpty()) {
             fail("input is empty");
         }
 
-        List<Pair<Key, Value>> actual = null;
+        List<Pair<WritableComparable, Writable>> actual = null;
         Object o = input.get(0);
         if (o instanceof String) {
             actual = runString((List<String>) input);
@@ -122,7 +124,7 @@ public abstract class JobDriver extends SimpleJobTool {
         }
 
         if (stdout) {
-            for (Pair<Key, Value> pair : actual) {
+            for (Pair<WritableComparable, Writable> pair : actual) {
                 System.out.println(pair);
             }
         }
@@ -131,7 +133,7 @@ public abstract class JobDriver extends SimpleJobTool {
 
         if (output != null) {
             for (int i = 0; i < output.size(); i++) {
-                Pair<Key, Value> pair = actual.get(i);
+                Pair<WritableComparable, Writable> pair = actual.get(i);
                 Record r = output.get(i);
                 String s = String.format(OUTPUT, r.getKey().toString(),
                                                  r.getValue().toString());
@@ -148,13 +150,14 @@ public abstract class JobDriver extends SimpleJobTool {
      * @throws ClassNotFoundException
      * @throws IOException
      */
-    private List<Pair<Key, Value>> runString(List<? extends String> input)
+    @SuppressWarnings("rawtypes")
+    private List<Pair<WritableComparable, Writable>> runString(List<? extends String> input)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
         boolean first = true;
-        List<Pair<Key, Value>> actual = null;
+        List<Pair<WritableComparable, Writable>> actual = null;
 
         for (Job job : sequencalJobChain.getJobs()) {
-            MapReduceDriver<Key, Value, Key, Value, Key, Value> driver = createDriver(job, false);
+            MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> driver = createDriver(job, false);
 
             if (first) {
                 boolean formatIgnored =
@@ -163,6 +166,8 @@ public abstract class JobDriver extends SimpleJobTool {
                         sequencalJobChain.getJobs().get(0).getConfiguration().getStrings(SimpleJob.LABELS);
                 String separator =
                         sequencalJobChain.getJobs().get(0).getConfiguration().get(SimpleJob.SEPARATOR, StringUtil.COMMA);
+                boolean separatorRegex =
+                        sequencalJobChain.getJobs().get(0).getConfiguration().getBoolean(SimpleJob.SEPARATOR_REGEX, false);
 
                 if (masterSeparator == null) {
                     masterSeparator = separator;
@@ -172,14 +177,13 @@ public abstract class JobDriver extends SimpleJobTool {
                     Key key = new Key();
                     key.addPrimitiveValue("KEY", 1L);
                     Value value = new Value();
-                    String[] strings = StringUtil.split(s, separator, false);
 
                     ValueCreator valueCreator = null;
                     if (labels == null) {
-                        valueCreator = new SimpleValueCreator();
+                        valueCreator = new SimpleValueCreator(separator, separatorRegex);
                     } else {
                         if (masterData == null) {
-                            valueCreator = new LabelValueCreator(labels, formatIgnored);
+                            valueCreator = new LabelValueCreator(labels, formatIgnored, separator, separatorRegex);
                         } else {
                             int masterJoinNo = getJoinNo(masterLabels, masterColumn);
                             int dataJoinNo = getJoinNo(labels, dataColumn);
@@ -194,21 +198,21 @@ public abstract class JobDriver extends SimpleJobTool {
                                     simpleJoinRegexMap.put(p, entry.getValue());
                                 }
                                 valueCreator =
-                                        new JoinRegexValueCreator(labels, formatIgnored, masterLabels,
+                                        new JoinRegexValueCreator(labels, formatIgnored, separator, separatorRegex, masterLabels,
                                                                  masterJoinNo, dataJoinNo, simpleJoinRegexMap);
                             } else {
-                                valueCreator = new JoinValueCreator(labels, formatIgnored, masterLabels,
+                                valueCreator = new JoinValueCreator(labels, formatIgnored, separator, separatorRegex, masterLabels,
                                                                     masterJoinNo, dataJoinNo, simpleJoinMap);
                             }
                         }
                     }
 
-                    valueCreator.create(strings, value);
+                    valueCreator.create(s, value);
                     driver.addInput(key, value);
                 }
                 first = false;
             } else {
-                for (Pair<Key, Value> pair : actual) {
+                for (Pair<WritableComparable, Writable> pair : actual) {
                     driver.addInput(pair.getFirst(), pair.getSecond());
                 }
             }
@@ -227,13 +231,14 @@ public abstract class JobDriver extends SimpleJobTool {
      * @throws ClassNotFoundException
      * @throws IOException
      */
-    private List<Pair<Key, Value>> runRecord(List<? extends Record> input)
+    @SuppressWarnings("rawtypes")
+    private List<Pair<WritableComparable, Writable>> runRecord(List<? extends Record> input)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
         boolean first = true;
-        List<Pair<Key, Value>> actual = null;
+        List<Pair<WritableComparable, Writable>> actual = null;
 
         for (Job job : sequencalJobChain.getJobs()) {
-            MapReduceDriver<Key, Value, Key, Value, Key, Value> driver = createDriver(job, true);
+            MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> driver = createDriver(job, true);
 
             if (first) {
                 for (Record r : input) {
@@ -241,7 +246,7 @@ public abstract class JobDriver extends SimpleJobTool {
                 }
                 first = false;
             } else {
-                for (Pair<Key, Value> pair : actual) {
+                for (Pair<WritableComparable, Writable> pair : actual) {
                     driver.addInput(pair.getFirst(), pair.getSecond());
                 }
             }
@@ -261,13 +266,13 @@ public abstract class JobDriver extends SimpleJobTool {
      * @throws ClassNotFoundException
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private MapReduceDriver<Key, Value, Key, Value, Key, Value> createDriver(Job job, boolean record)
+    private MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> createDriver(Job job, boolean record)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
         Mapper mapper = job.getMapperClass().newInstance();
         Reducer reducer = job.getReducerClass().newInstance();
         RawComparator groupingComparator = job.getGroupingComparator();
         RawComparator sortComparator = job.getSortComparator();
-        MapReduceDriver<Key, Value, Key, Value, Key, Value> driver =
+        MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> driver =
                 MapReduceDriver.newMapReduceDriver(mapper, reducer)
                                .withKeyGroupingComparator(groupingComparator)
                                .withKeyOrderComparator(sortComparator);

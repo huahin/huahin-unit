@@ -22,12 +22,14 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.huahinframework.core.Summarizer;
 import org.huahinframework.core.io.Key;
 import org.huahinframework.core.io.Record;
-import org.huahinframework.core.io.Value;
 import org.junit.Before;
 
 /**
@@ -55,16 +57,20 @@ import org.junit.Before;
  * </pre></blockquote></p>
  */
 public abstract class SummarizerDriver {
-    private Reducer<Key, Value, Key, Value> reducer;
-    private ReduceDriver<Key, Value, Key, Value> driver;
+    @SuppressWarnings("rawtypes")
+    private Reducer<WritableComparable, Writable, WritableComparable, Writable> reducer;
+
+    @SuppressWarnings("rawtypes")
+    private ReduceDriver<WritableComparable, Writable, WritableComparable, Writable> driver;
 
     /**
      * @throws java.lang.Exception
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Before
     public void setUp() throws Exception {
-        reducer = getSummarizer();
-        driver = new ReduceDriver<Key, Value, Key, Value>(reducer);
+        reducer = (Reducer) getSummarizer();
+        driver = new ReduceDriver<WritableComparable, Writable, WritableComparable, Writable>(reducer);
     }
 
     /**
@@ -78,16 +84,20 @@ public abstract class SummarizerDriver {
         }
 
         Key key = input.get(0).getKey();
-        List<Value> values = new ArrayList<Value>();
+        boolean groupingNothing = input.get(0).isGroupingNothing();
+
+        List<Writable> values = new ArrayList<Writable>();
         for (Record record : input) {
-            values.add(record.getValue());
+            values.add(record.isValueNothing() ? NullWritable.get() : record.getValue());
         }
 
-        driver.withInput(key, values);
+        driver.withInput(groupingNothing ? NullWritable.get() : key,
+                         values);
 
         if (output != null) {
             for (Record r : output) {
-                driver.withOutput(r.getKey(), r.getValue());
+                driver.withOutput(r.isGroupingNothing() ? NullWritable.get() : r.getKey(),
+                                  r.isValueNothing() ? NullWritable.get() : r.getValue());
             }
         }
 
