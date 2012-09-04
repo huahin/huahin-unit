@@ -155,6 +155,7 @@ public abstract class JobDriver extends SimpleJobTool {
             throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
         boolean first = true;
         List<Pair<WritableComparable, Writable>> actual = null;
+        String[] beforeSummarizerOutputLabel = null;
 
         for (Job job : sequencalJobChain.getJobs()) {
             MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> driver = createDriver(job, false);
@@ -210,10 +211,33 @@ public abstract class JobDriver extends SimpleJobTool {
                     valueCreator.create(s, value);
                     driver.addInput(key, value);
                 }
+
+                if (job instanceof SimpleJob) {
+                    SimpleJob sj = (SimpleJob) job;
+                    String[] summarizerOutputLabels = sj.getSummarizerOutputLabels();
+                    if (summarizerOutputLabels != null) {
+                        beforeSummarizerOutputLabel = summarizerOutputLabels;
+                    }
+                }
+
                 first = false;
             } else {
                 for (Pair<WritableComparable, Writable> pair : actual) {
                     driver.addInput(pair.getFirst(), pair.getSecond());
+                }
+
+                if (job instanceof SimpleJob) {
+                    SimpleJob sj = (SimpleJob) job;
+                    if (!sj.isNatural()) {
+                        if (beforeSummarizerOutputLabel != null) {
+                            job.getConfiguration().setStrings(SimpleJob.BEFORE_SUMMARIZER_OUTPUT_LABELS,
+                                                              beforeSummarizerOutputLabel);
+                        }
+                        String[] summarizerOutputLabels = sj.getSummarizerOutputLabels();
+                        if (summarizerOutputLabels != null) {
+                            beforeSummarizerOutputLabel = summarizerOutputLabels;
+                        }
+                    }
                 }
             }
 
@@ -236,6 +260,7 @@ public abstract class JobDriver extends SimpleJobTool {
             throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
         boolean first = true;
         List<Pair<WritableComparable, Writable>> actual = null;
+        String[] beforeSummarizerOutputLabel = null;
 
         for (Job job : sequencalJobChain.getJobs()) {
             MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> driver = createDriver(job, true);
@@ -244,10 +269,33 @@ public abstract class JobDriver extends SimpleJobTool {
                 for (Record r : input) {
                     driver.addInput(r.getKey(), r.getValue());
                 }
+
+                if (job instanceof SimpleJob) {
+                    SimpleJob sj = (SimpleJob) job;
+                    String[] summarizerOutputLabels = sj.getSummarizerOutputLabels();
+                    if (summarizerOutputLabels != null) {
+                        beforeSummarizerOutputLabel = summarizerOutputLabels;
+                    }
+                }
+
                 first = false;
             } else {
                 for (Pair<WritableComparable, Writable> pair : actual) {
                     driver.addInput(pair.getFirst(), pair.getSecond());
+                }
+
+                if (job instanceof SimpleJob) {
+                    SimpleJob sj = (SimpleJob) job;
+                    if (!sj.isNatural()) {
+                        if (beforeSummarizerOutputLabel != null) {
+                            job.getConfiguration().setStrings(SimpleJob.BEFORE_SUMMARIZER_OUTPUT_LABELS,
+                                                              beforeSummarizerOutputLabel);
+                        }
+                        String[] summarizerOutputLabels = sj.getSummarizerOutputLabels();
+                        if (summarizerOutputLabels != null) {
+                            beforeSummarizerOutputLabel = summarizerOutputLabels;
+                        }
+                    }
                 }
             }
 
