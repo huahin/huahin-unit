@@ -357,6 +357,37 @@ public abstract class FilterDriver {
     }
 
     /**
+     * to join the data that does not fit into memory.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterData master data
+     */
+    protected void setBigJoin(String[] masterLabels, String masterColumn,
+                              String dataColumn, List<String> masterData) {
+        masterSeparator = null;
+        setBigJoin(masterLabels, masterColumn, dataColumn, masterSeparator, masterData);
+    }
+
+    /**
+     * to join the data that does not fit into memory.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterSeparator separator
+     * @param masterData master data
+     */
+    protected void setBigJoin(String[] masterLabels, String masterColumn,
+                              String dataColumn, String masterSeparator, List<String> masterData) {
+        this.masterLabels = masterLabels;
+        this.masterColumn = masterColumn;
+        this.dataColumn = dataColumn;
+        this.masterSeparator = masterSeparator;
+        this.masterData = masterData;
+        this.regex = false;
+    }
+
+    /**
      * get join column number
      * @param labels label's
      * @param join join column

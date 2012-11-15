@@ -20,6 +20,7 @@ package org.huahinframework.unit;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
@@ -86,6 +88,7 @@ public abstract class JobDriver extends SimpleJobTool {
     private String dataColumn;
     private boolean regex;
     private List<String> masterData;
+    private boolean bigJoin;
 
     /**
      * @throws java.lang.Exception
@@ -158,8 +161,14 @@ public abstract class JobDriver extends SimpleJobTool {
         String[] beforeSummarizerOutputLabel = null;
 
         for (Job job : sequencalJobChain.getJobs()) {
-            MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> driver = createDriver(job, false);
+            MapReduceDriver<WritableComparable,
+                            Writable,
+                            WritableComparable,
+                            Writable,
+                            WritableComparable,
+                            Writable> driver = createDriver(job);
 
+            boolean onlyJoin = false;
             if (first) {
                 boolean formatIgnored =
                         sequencalJobChain.getJobs().get(0).getConfiguration().getBoolean(SimpleJob.FORMAT_IGNORED, false);
@@ -174,40 +183,68 @@ public abstract class JobDriver extends SimpleJobTool {
                     masterSeparator = separator;
                 }
 
-                for (String s : input) {
-                    Key key = new Key();
-                    key.addPrimitiveValue("KEY", 1L);
-                    Value value = new Value();
+                Key key = new Key();
+                key.addPrimitiveValue("KEY", 1L);
 
-                    ValueCreator valueCreator = null;
-                    if (labels == null) {
-                        valueCreator = new SimpleValueCreator(separator, separatorRegex);
+                Map<String, String[]> simpleJoinMap = null;
+                ValueCreator valueCreator = null;
+                if (labels == null) {
+                    valueCreator = new SimpleValueCreator(separator, separatorRegex);
+                } else {
+                    if (masterData == null) {
+                        valueCreator = new LabelValueCreator(labels, formatIgnored, separator, separatorRegex);
                     } else {
-                        if (masterData == null) {
-                            valueCreator = new LabelValueCreator(labels, formatIgnored, separator, separatorRegex);
-                        } else {
-                            int masterJoinNo = getJoinNo(masterLabels, masterColumn);
-                            int dataJoinNo = getJoinNo(labels, dataColumn);
+                        int masterJoinNo = getJoinNo(masterLabels, masterColumn);
+                        int dataJoinNo = getJoinNo(labels, dataColumn);
 
-                            Map<String, String[]> simpleJoinMap = null;
-                            simpleJoinMap =
-                                    getSimpleMaster(masterData, masterJoinNo, masterSeparator);
-                            if (regex) {
-                                Map<Pattern, String[]> simpleJoinRegexMap = new HashMap<Pattern, String[]>();
-                                for (Entry<String, String[]> entry : simpleJoinMap.entrySet()) {
-                                    Pattern p = Pattern.compile(entry.getKey());
-                                    simpleJoinRegexMap.put(p, entry.getValue());
-                                }
-                                valueCreator =
-                                        new JoinRegexValueCreator(labels, formatIgnored, separator, separatorRegex, masterLabels,
-                                                                 masterJoinNo, dataJoinNo, simpleJoinRegexMap);
-                            } else {
-                                valueCreator = new JoinValueCreator(labels, formatIgnored, separator, separatorRegex, masterLabels,
-                                                                    masterJoinNo, dataJoinNo, simpleJoinMap);
+                        simpleJoinMap =
+                                getSimpleMaster(masterData, masterJoinNo, masterSeparator);
+                        if (regex) {
+                            Map<Pattern, String[]> simpleJoinRegexMap = new HashMap<Pattern, String[]>();
+                            for (Entry<String, String[]> entry : simpleJoinMap.entrySet()) {
+                                Pattern p = Pattern.compile(entry.getKey());
+                                simpleJoinRegexMap.put(p, entry.getValue());
                             }
+                            valueCreator =
+                                    new JoinRegexValueCreator(labels, formatIgnored, separator, separatorRegex, masterLabels,
+                                                             masterJoinNo, dataJoinNo, simpleJoinRegexMap);
+                        } else {
+                            valueCreator = new JoinValueCreator(labels, formatIgnored, separator, separatorRegex, masterLabels,
+                                                                masterJoinNo, dataJoinNo, simpleJoinMap);
                         }
                     }
+                }
 
+                if (bigJoin && sequencalJobChain.getJobs().size() == 1) {
+                    SimpleJob sj = (SimpleJob) job;
+                    if (!sj.isMapper() && !sj.isReducer()) {
+                        actual = new ArrayList<Pair<WritableComparable, Writable>>();
+                        for (String s : input) {
+                            Value value = new Value();
+                            valueCreator.create(s, value);
+                            Key k = new Key();
+                            for (String label : labels) {
+                                k.addPrimitiveValue(label, value.getPrimitiveValue(label));
+                            }
+
+                            String[] masterData = simpleJoinMap.get(value.getPrimitiveValue(dataColumn));
+                            if (masterData == null) {
+                                masterData = new String[masterLabels.length];
+                            }
+                            for (int i = 0; i < masterData.length; i++) {
+                                k.addPrimitiveValue(masterLabels[i], masterData[i]);
+                            }
+
+                            Pair<WritableComparable, Writable> p =
+                                    new Pair<WritableComparable, Writable>(k, new Text());
+                            actual.add(p);
+                        }
+                        onlyJoin = true;
+                    }
+                }
+
+                for (String s : input) {
+                    Value value = new Value();
                     valueCreator.create(s, value);
                     driver.addInput(key, value);
                 }
@@ -241,7 +278,9 @@ public abstract class JobDriver extends SimpleJobTool {
                 }
             }
 
-            actual = driver.run();
+            if (!onlyJoin) {
+                actual = driver.run();
+            }
         }
 
         return actual;
@@ -263,7 +302,12 @@ public abstract class JobDriver extends SimpleJobTool {
         String[] beforeSummarizerOutputLabel = null;
 
         for (Job job : sequencalJobChain.getJobs()) {
-            MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> driver = createDriver(job, true);
+            MapReduceDriver<WritableComparable,
+                            Writable,
+                            WritableComparable,
+                            Writable,
+                            WritableComparable,
+                            Writable> driver = createDriver(job);
 
             if (first) {
                 for (Record r : input) {
@@ -307,14 +351,13 @@ public abstract class JobDriver extends SimpleJobTool {
 
     /**
      * @param job
-     * @param record
      * @return List<Pair<Key, Value>>
      * @throws InstantiationException
      * @throws IllegalAccessException
      * @throws ClassNotFoundException
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> createDriver(Job job, boolean record)
+    private MapReduceDriver<WritableComparable, Writable, WritableComparable, Writable, WritableComparable, Writable> createDriver(Job job)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
         Mapper mapper = job.getMapperClass().newInstance();
         Reducer reducer = job.getReducerClass().newInstance();
@@ -376,6 +419,38 @@ public abstract class JobDriver extends SimpleJobTool {
         this.masterSeparator = masterSeparator;
         this.regex = regex;
         this.masterData = masterData;
+    }
+
+    /**
+     * to join the data that does not fit into memory.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterData master data
+     */
+    protected void setBigJoin(String[] masterLabels, String masterColumn,
+                              String dataColumn, List<String> masterData) {
+        masterSeparator = null;
+        setBigJoin(masterLabels, masterColumn, dataColumn, masterSeparator, masterData);
+    }
+
+    /**
+     * to join the data that does not fit into memory.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterSeparator separator
+     * @param masterData master data
+     */
+    protected void setBigJoin(String[] masterLabels, String masterColumn,
+                              String dataColumn, String masterSeparator, List<String> masterData) {
+        this.bigJoin = true;
+        this.masterLabels = masterLabels;
+        this.masterColumn = masterColumn;
+        this.dataColumn = dataColumn;
+        this.masterSeparator = masterSeparator;
+        this.masterData = masterData;
+        this.regex = false;
     }
 
     /**
