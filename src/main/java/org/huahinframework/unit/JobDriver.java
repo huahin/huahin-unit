@@ -371,7 +371,6 @@ public abstract class JobDriver extends SimpleJobTool {
         return driver;
     }
 
-
     /**
      * Easily supports the Join. To use the setSimpleJoin,
      * you must be a size master data appear in the memory of the task.
