@@ -33,13 +33,14 @@ import org.junit.Test;
 /**
  *
  */
-public class JobDriverJoinTest extends JobDriver {
-    private static final String LABEL_ID = "ID";
+public class JobDriverJoinSomeColumnTest extends JobDriver {
+    private static final String LABEL_ID_1 = "ID1";
+    private static final String LABEL_ID_2 = "ID2";
     private static final String LABEL_VALUE = "VALUE";
     private static final String LABEL_NAME = "NAME";
 
-    private static final String[] LABELS = { LABEL_ID, LABEL_VALUE };
-    private static final String[] MASTER_LABELS = { LABEL_ID, LABEL_NAME };
+    private static final String[] LABELS = { LABEL_ID_1, LABEL_ID_2, LABEL_VALUE };
+    private static final String[] MASTER_LABELS = { LABEL_ID_1, LABEL_ID_2, LABEL_NAME };
 
     private List<String> masterData;
 
@@ -107,12 +108,12 @@ public class JobDriverJoinTest extends JobDriver {
                                              .setSummarizer(TestSummarizer.class);
 
         List<String> input = new ArrayList<String>();
-        input.add(1 + StringUtil.TAB + 1);
-        input.add(1 + StringUtil.TAB + 2);
-        input.add(1 + StringUtil.TAB + 3);
-        input.add(6 + StringUtil.TAB + 1);
-        input.add(6 + StringUtil.TAB + 2);
-        input.add(11 + StringUtil.TAB + 1);
+        input.add(1 + StringUtil.TAB + 1 + StringUtil.TAB + 1);
+        input.add(1 + StringUtil.TAB + 1 + StringUtil.TAB + 2);
+        input.add(1 + StringUtil.TAB + 1 + StringUtil.TAB + 3);
+        input.add(6 + StringUtil.TAB + 6 + StringUtil.TAB + 1);
+        input.add(6 + StringUtil.TAB + 6 + StringUtil.TAB + 2);
+        input.add(11 + StringUtil.TAB + 11 + StringUtil.TAB + 1);
 
         List<Record> output = new ArrayList<Record>();
         Record r1 = new Record();
@@ -125,7 +126,9 @@ public class JobDriverJoinTest extends JobDriver {
         r2.addValue(LABEL_VALUE, 3);
         output.add(r2);
 
-        setSimpleJoin(MASTER_LABELS, LABEL_ID, LABEL_ID, masterData);
+        String[] jm = { LABEL_ID_1, LABEL_ID_2 };
+        String[] jd = { LABEL_ID_1, LABEL_ID_2 };
+        setSimpleJoin(MASTER_LABELS, jm, jd, masterData);
 
         run(input, output, true);
     }
@@ -133,7 +136,7 @@ public class JobDriverJoinTest extends JobDriver {
     private List<String> createMaster() {
         List<String> l = new ArrayList<String>();
         for (int i = 1; i <= 10; i++) {
-            l.add(i + StringUtil.TAB + "NAME_" + i);
+            l.add(i + StringUtil.TAB + i + StringUtil.TAB + "NAME_" + i);
         }
         return l;
     }

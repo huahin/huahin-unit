@@ -18,11 +18,11 @@
 package org.huahinframework.unit;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.huahinframework.core.DataFormatException;
 import org.huahinframework.core.Filter;
 import org.huahinframework.core.io.Record;
 import org.huahinframework.core.util.StringUtil;
@@ -38,8 +38,8 @@ public class FilterDriverJoinTest extends FilterDriver {
     private static final String LABEL_VALUE = "VALUE";
     private static final String LABEL_NAME = "NAME";
 
-    private static final String[] LABELS = new String[] { LABEL_ID, LABEL_VALUE };
-    private static final String[] MASTER_LABELS = new String[] { LABEL_ID, LABEL_NAME };
+    private static final String[] LABELS = { LABEL_ID, LABEL_VALUE };
+    private static final String[] MASTER_LABELS = { LABEL_ID, LABEL_NAME };
 
     private List<String> masterData;
 
@@ -75,7 +75,7 @@ public class FilterDriverJoinTest extends FilterDriver {
     }
 
     @Test
-    public void testFirstHit() throws DataFormatException {
+    public void testFirstHit() throws IOException, URISyntaxException {
         String input = "1" + StringUtil.TAB + "A";
 
         Record output = new Record();
@@ -88,7 +88,7 @@ public class FilterDriverJoinTest extends FilterDriver {
     }
 
     @Test
-    public void testFirstNotHit() throws DataFormatException {
+    public void testFirstNotHit() throws IOException, URISyntaxException {
         String input = "11" + StringUtil.TAB + "A";
 
         setSimpleJoin(MASTER_LABELS, LABEL_ID, LABEL_ID, masterData);

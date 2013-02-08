@@ -19,38 +19,49 @@ package org.huahinframework.unit;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.huahinframework.core.Filter;
 import org.huahinframework.core.io.Record;
 import org.huahinframework.core.util.StringUtil;
 import org.huahinframework.core.writer.Writer;
-import org.huahinframework.unit.FilterDriver;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  *
  */
-public class FilterDriverTest extends FilterDriver {
-    private static final String LABEL_COLUMN = "COLUMN";
+public class FilterDriverJoinSomeColumnTest extends FilterDriver {
+    private static final String LABEL_ID_1 = "ID1";
+    private static final String LABEL_ID_2 = "ID2";
     private static final String LABEL_VALUE = "VALUE";
+    private static final String LABEL_NAME = "NAME";
 
-    private static final String COLUMN_A = "A";
-    private static final String COLUMN_B = "B";
+    private static final String[] LABELS = { LABEL_ID_1, LABEL_ID_2, LABEL_VALUE };
+    private static final String[] MASTER_LABELS = { LABEL_ID_1, LABEL_ID_2, LABEL_NAME };
 
-    private static final String[] LABELS = { LABEL_COLUMN, LABEL_VALUE };
+    private List<String> masterData;
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        masterData = createMaster();
+    }
 
     private static class TestFilter extends Filter {
         @Override
         public void filter(Record record, Writer writer)
                 throws IOException, InterruptedException {
-            String column = record.getValueString(LABEL_COLUMN);
-            if (!column.equals(COLUMN_A)) {
+            String name = record.getValueString(LABEL_NAME);
+            if (name == null) {
                 return;
             }
 
             Record emitRecord = new Record();
-            emitRecord.addGrouping(LABEL_COLUMN, column);
+            emitRecord.addGrouping(LABEL_NAME, name);
             emitRecord.addValue(LABEL_VALUE, record.getValueString(LABEL_VALUE));
             writer.write(emitRecord);
         }
@@ -66,41 +77,36 @@ public class FilterDriverTest extends FilterDriver {
 
     @Test
     public void testFirstHit() throws IOException, URISyntaxException {
-        String input = COLUMN_A + StringUtil.TAB + 1;
+        String input = "1" + StringUtil.TAB + "1" + StringUtil.TAB + "A";
 
         Record output = new Record();
-        output.addGrouping(LABEL_COLUMN, COLUMN_A);
-        output.addValue(LABEL_VALUE, "1");
+        output.addGrouping(LABEL_NAME, "NAME_1");
+        output.addValue(LABEL_VALUE, "A");
+
+        String[] jm = { LABEL_ID_1, LABEL_ID_2 };
+        String[] jd = { LABEL_ID_1, LABEL_ID_2 };
+        setSimpleJoin(MASTER_LABELS, jm, jd, masterData);
 
         run(LABELS, StringUtil.TAB, false, input, Arrays.asList(output));
     }
 
     @Test
     public void testFirstNotHit() throws IOException, URISyntaxException {
-        String input = COLUMN_B + StringUtil.TAB + 1;
+        String input = "11" + StringUtil.TAB + "11" + StringUtil.TAB + "A";
+
+        String[] jm = { LABEL_ID_1, LABEL_ID_2 };
+        String[] jd = { LABEL_ID_1, LABEL_ID_2 };
+        setSimpleJoin(MASTER_LABELS, jm, jd, masterData);
+
         run(LABELS, StringUtil.TAB, false, input, null);
     }
 
-    @Test
-    public void testSecondHit() {
-        Record input = new Record();
-        input.addValue(LABEL_COLUMN, COLUMN_A);
-        input.addValue(LABEL_VALUE, "1");
-
-        Record output = new Record();
-        output.addGrouping(LABEL_COLUMN, COLUMN_A);
-        output.addValue(LABEL_VALUE, "1");
-
-        run(input, Arrays.asList(output));
-    }
-
-    @Test
-    public void testSecondNotHit() {
-        Record input = new Record();
-        input.addValue(LABEL_COLUMN, COLUMN_B);
-        input.addValue(LABEL_VALUE, "1");
-
-        run(input, null);
+    private List<String> createMaster() {
+        List<String> l = new ArrayList<String>();
+        for (int i = 1; i <= 10; i++) {
+            l.add(i + StringUtil.TAB + i + StringUtil.TAB + "NAME_" + i);
+        }
+        return l;
     }
 
     @Override

@@ -18,6 +18,7 @@
 package org.huahinframework.unit;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +94,7 @@ public class JobDriverTest extends JobDriver {
 
     @Test
     public void test()
-            throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+            throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, URISyntaxException {
         addJob(LABELS, StringUtil.TAB, false).setFilter(TestFilter.class)
                                              .setSummarizer(TestSummarizer.class);
 

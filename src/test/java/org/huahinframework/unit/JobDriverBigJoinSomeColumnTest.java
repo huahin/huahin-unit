@@ -31,13 +31,14 @@ import org.junit.Test;
 /**
  *
  */
-public class JobDriverBigJoinTest extends JobDriver {
-    private static final String LABEL_ID = "ID";
+public class JobDriverBigJoinSomeColumnTest extends JobDriver {
+    private static final String LABEL_ID_1 = "ID1";
+    private static final String LABEL_ID_2 = "ID2";
     private static final String LABEL_VALUE = "VALUE";
     private static final String LABEL_NAME = "NAME";
 
-    private static final String[] LABELS = { LABEL_ID, LABEL_VALUE };
-    private static final String[] MASTER_LABELS = { LABEL_ID, LABEL_NAME };
+    private static final String[] LABELS = { LABEL_ID_1, LABEL_ID_2, LABEL_VALUE };
+    private static final String[] MASTER_LABELS = { LABEL_ID_1, LABEL_ID_2, LABEL_NAME };
 
     public static class TestFilter extends Filter {
         @Override
@@ -48,7 +49,8 @@ public class JobDriverBigJoinTest extends JobDriver {
         public void filter(Record record, Writer writer)
                 throws IOException, InterruptedException {
             Record emitRecord = new Record();
-            emitRecord.addGrouping(LABEL_ID, record.getValueString(LABEL_ID));
+            emitRecord.addGrouping(LABEL_ID_1, record.getValueString(LABEL_ID_1));
+            emitRecord.addGrouping(LABEL_ID_2, record.getValueString(LABEL_ID_2));
             emitRecord.addValue(LABEL_VALUE, record.getValueString(LABEL_VALUE));
             emitRecord.addValue(LABEL_NAME, record.getValueString(LABEL_NAME));
             writer.write(emitRecord);
@@ -65,18 +67,18 @@ public class JobDriverBigJoinTest extends JobDriver {
         addJob(LABELS, StringUtil.TAB).setFilter(TestFilter.class);
 
         List<String> input = new ArrayList<String>();
-        input.add(1 + StringUtil.TAB + "A");
-        input.add(2 + StringUtil.TAB + "B");
-        input.add(3 + StringUtil.TAB + "C");
-        input.add(4 + StringUtil.TAB + "D");
-        input.add(5 + StringUtil.TAB + "E");
+        input.add(1 + StringUtil.TAB + 1 + StringUtil.TAB + "A");
+        input.add(2 + StringUtil.TAB + 2 + StringUtil.TAB + "B");
+        input.add(3 + StringUtil.TAB + 3 + StringUtil.TAB + "C");
+        input.add(4 + StringUtil.TAB + 4 + StringUtil.TAB + "D");
+        input.add(5 + StringUtil.TAB + 5 + StringUtil.TAB + "E");
 
         List<String> masterData = new ArrayList<String>();
-        masterData.add(1 + StringUtil.TAB + "A1");
-        masterData.add(2 + StringUtil.TAB + "B2");
-        masterData.add(3 + StringUtil.TAB + "C3");
-        masterData.add(4 + StringUtil.TAB + "D4");
-        masterData.add(5 + StringUtil.TAB + "E5");
+        masterData.add(1 + StringUtil.TAB + 1 + StringUtil.TAB + "A1");
+        masterData.add(2 + StringUtil.TAB + 2 + StringUtil.TAB + "B2");
+        masterData.add(3 + StringUtil.TAB + 3 + StringUtil.TAB + "C3");
+        masterData.add(4 + StringUtil.TAB + 4 + StringUtil.TAB + "D4");
+        masterData.add(5 + StringUtil.TAB + 5 + StringUtil.TAB + "E5");
 
         List<Record> output = new ArrayList<Record>();
         output.add(createMaster("A", 1));
@@ -85,14 +87,17 @@ public class JobDriverBigJoinTest extends JobDriver {
         output.add(createMaster("D", 4));
         output.add(createMaster("E", 5));
 
-        setBigJoin(MASTER_LABELS, LABEL_ID, LABEL_ID, masterData);
+        String[] jm = { LABEL_ID_1, LABEL_ID_2 };
+        String[] jd = { LABEL_ID_1, LABEL_ID_2 };
+        setBigJoin(MASTER_LABELS, jm, jd, masterData);
 
         run(input, output, true);
     }
 
     private Record createMaster(String s, int i) {
         Record r = new Record();
-        r.addGrouping(LABEL_ID, String.valueOf(i));
+        r.addGrouping(LABEL_ID_1, String.valueOf(i));
+        r.addGrouping(LABEL_ID_2, String.valueOf(i));
         r.addValue(LABEL_VALUE, s);
         r.addValue(LABEL_NAME, s + i);
         return r;

@@ -18,6 +18,7 @@
 package org.huahinframework.unit;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,12 +34,12 @@ public class JobDriverBigJoinOnlyJoinTest extends JobDriver {
     private static final String LABEL_VALUE = "VALUE";
     private static final String LABEL_NAME = "NAME";
 
-    private static final String[] LABELS = new String[] { LABEL_ID, LABEL_VALUE };
-    private static final String[] MASTER_LABELS = new String[] { LABEL_ID, LABEL_NAME };
+    private static final String[] LABELS = { LABEL_ID, LABEL_VALUE };
+    private static final String[] MASTER_LABELS = { LABEL_ID, LABEL_NAME };
 
     @Test
     public void test()
-            throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+            throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, URISyntaxException {
         addJob(LABELS, StringUtil.TAB);
 
         List<String> input = new ArrayList<String>();

@@ -18,10 +18,10 @@
 package org.huahinframework.unit;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.huahinframework.core.DataFormatException;
 import org.huahinframework.core.Filter;
 import org.huahinframework.core.io.Record;
 import org.huahinframework.core.util.StringUtil;
@@ -39,7 +39,7 @@ public class FilterDriverSomeWriteTest extends FilterDriver {
     private static final String COLUMN_A = "A";
     private static final String COLUMN_B = "B";
 
-    private static final String[] LABELS = new String[] { LABEL_COLUMN, LABEL_VALUE };
+    private static final String[] LABELS = { LABEL_COLUMN, LABEL_VALUE };
 
     private static class TestFilter extends Filter {
         @Override
@@ -69,7 +69,7 @@ public class FilterDriverSomeWriteTest extends FilterDriver {
     }
 
     @Test
-    public void testFirstHit() throws DataFormatException {
+    public void testFirstHit() throws IOException, URISyntaxException {
         String input = COLUMN_A + StringUtil.TAB + 1;
 
         List<Record> output = new ArrayList<Record>();
@@ -84,7 +84,7 @@ public class FilterDriverSomeWriteTest extends FilterDriver {
     }
 
     @Test
-    public void testFirstNotHit() throws DataFormatException {
+    public void testFirstNotHit() throws IOException, URISyntaxException {
         String input = COLUMN_B + StringUtil.TAB + 1;
         run(LABELS, StringUtil.TAB, false, input, null);
     }
