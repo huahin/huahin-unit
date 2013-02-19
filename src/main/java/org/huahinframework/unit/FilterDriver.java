@@ -516,6 +516,90 @@ public abstract class FilterDriver {
     }
 
     /**
+     * This method is to determine automatically join the Simple and Big.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterData master data
+     */
+    protected void setJoin(String[] masterLabels, String masterColumn,
+                           String dataColumn, List<String> masterData) {
+        setJoin(masterLabels, masterColumn, dataColumn, null, false, masterData);
+    }
+
+    /**
+     * This method is to determine automatically join the Simple and Big.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param regex master join is regex;
+     * @param masterData master data
+     */
+    protected void setJoin(String[] masterLabels, String masterColumn,
+                           String dataColumn, boolean regex, List<String> masterData) {
+        setJoin(masterLabels, masterColumn, dataColumn, null, regex, masterData);
+    }
+
+    /**
+     * This method is to determine automatically join the Simple and Big.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterSeparator separator
+     * @param regex master join is regex
+     * @param masterData master data
+     */
+    protected void setJoin(String[] masterLabels, String masterColumn, String dataColumn,
+                           String masterSeparator, boolean regex, List<String> masterData) {
+        setSimpleJoin(masterLabels, masterColumn, dataColumn, masterSeparator, regex, masterData);
+    }
+
+    /**
+     * This method is to determine automatically join the Simple and Big.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterData master data
+     * @throws DataFormatException
+     */
+    protected void setJoin(String[] masterLabels, String[] masterColumn,
+                           String[] dataColumn, List<String> masterData)
+                                         throws DataFormatException {
+        setJoin(masterLabels, masterColumn, dataColumn, null, false, masterData);
+    }
+
+    /**
+     * This method is to determine automatically join the Simple and Big.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param regex master join is regex;
+     * @param masterData master data
+     * @throws DataFormatException
+     */
+    protected void setJoin(String[] masterLabels, String[] masterColumn,
+                                 String[] dataColumn, boolean regex, List<String> masterData)
+                                         throws DataFormatException {
+        setJoin(masterLabels, masterColumn, dataColumn, null, regex, masterData);
+    }
+
+    /**
+     * This method is to determine automatically join the Simple and Big.
+     * @param masterLabels label of master data
+     * @param masterColumn master column
+     * @param dataColumn data column
+     * @param masterSeparator separator
+     * @param regex master join is regex
+     * @param masterData master data
+     * @throws DataFormatException
+     */
+    protected void setJoin(String[] masterLabels, String[] masterColumn, String[] dataColumn,
+                           String masterSeparator, boolean regex, List<String> masterData)
+                                         throws DataFormatException {
+        setSimpleJoin(masterLabels, masterColumn, dataColumn, masterSeparator, regex, masterData);
+    }
+
+    /**
      * @param conf
      * @return Map
      * @throws IOException
