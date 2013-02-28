@@ -203,7 +203,7 @@
     <dependency>
       <groupId>org.huahinframework</groupId>
       <artifactId>huahin-core</artifactId>
-      <version>0.1.6-SNAPSHOT</version>
+      <version>0.1.8-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.mrunit</groupId>
