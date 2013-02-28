@@ -89,6 +89,8 @@ public abstract class JobDriver extends SimpleJobTool {
     private String masterSeparator;
     private List<String> masterData;
     private boolean bigJoin;
+    private String fileName;
+    private long fileLength;
 
     /**
      * @throws java.lang.Exception
@@ -196,6 +198,11 @@ public abstract class JobDriver extends SimpleJobTool {
 
                 Key key = new Key();
                 key.addPrimitiveValue("KEY", 1L);
+                if (fileName == null) {
+                    fileName = "exmpale.txt";
+                }
+                key.addPrimitiveValue("FILE_NAME", fileName);
+                key.addPrimitiveValue("FILE_LENGTH", fileLength);
 
                 ValueCreator valueCreator = null;
                 int type = conf.getInt(SimpleJob.READER_TYPE, -1);
@@ -802,5 +809,21 @@ public abstract class JobDriver extends SimpleJobTool {
      */
     @Override
     protected void setup() throws Exception {
+    }
+
+    /**
+     * set input file name
+     * @param fileName the fileName to set
+     */
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    /**
+     * set input file length
+     * @param fileLength the fileLength to set
+     */
+    public void setFileLength(long fileLength) {
+        this.fileLength = fileLength;
     }
 }

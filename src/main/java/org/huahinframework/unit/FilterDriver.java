@@ -94,6 +94,8 @@ public abstract class FilterDriver {
     private Configuration conf;
     private List<String> masterData;
     private String masterSeparator;
+    private String fileName;
+    private long fileLength;
 
     /**
      * @throws java.lang.Exception
@@ -279,6 +281,11 @@ public abstract class FilterDriver {
 
         Key key = new Key();
         key.addPrimitiveValue("KEY", 1L);
+        if (fileName == null) {
+            fileName = "exmpale.txt";
+        }
+        key.addPrimitiveValue("FILE_NAME", fileName);
+        key.addPrimitiveValue("FILE_LENGTH", fileLength);
         Value value = new Value();
 
         ValueCreator valueCreator = null;
@@ -730,4 +737,20 @@ public abstract class FilterDriver {
      * @return new {@link Filter}
      */
     public abstract Filter getFilter();
+
+    /**
+     * set input file name
+     * @param fileName the fileName to set
+     */
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    /**
+     * set input file length
+     * @param fileLength the fileLength to set
+     */
+    public void setFileLength(long fileLength) {
+        this.fileLength = fileLength;
+    }
 }
