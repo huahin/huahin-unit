@@ -171,6 +171,7 @@ public abstract class JobDriver extends SimpleJobTool {
                             Writable,
                             WritableComparable,
                             Writable> driver = createDriver(job);
+            Configuration localConf = job.getConfiguration();
 
             boolean onlyJoin = false;
             if (first) {
@@ -328,6 +329,7 @@ public abstract class JobDriver extends SimpleJobTool {
             }
 
             if (!onlyJoin) {
+                driver.setConfiguration(localConf);
                 actual = driver.run();
             }
         }
@@ -357,6 +359,7 @@ public abstract class JobDriver extends SimpleJobTool {
                             Writable,
                             WritableComparable,
                             Writable> driver = createDriver(job);
+            Configuration localConf = job.getConfiguration();
 
             if (first) {
                 for (Record r : input) {
@@ -392,6 +395,7 @@ public abstract class JobDriver extends SimpleJobTool {
                 }
             }
 
+            driver.setConfiguration(localConf);
             actual = driver.run();
         }
 

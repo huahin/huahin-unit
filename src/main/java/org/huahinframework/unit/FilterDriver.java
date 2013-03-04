@@ -91,7 +91,7 @@ public abstract class FilterDriver {
     @SuppressWarnings("rawtypes")
     private MapDriver<Key, Value, WritableComparable, Writable> driver;
 
-    private Configuration conf;
+    protected Configuration conf;
     private List<String> masterData;
     private String masterSeparator;
     private String fileName;
@@ -710,16 +710,25 @@ public abstract class FilterDriver {
      * @param name parameter name
      * @param value {@link String} parameter value
      */
-    protected void setParameter(String name, String value) {
+    public void setParameter(String name, String value) {
         conf.set(name, value);
     }
 
     /**
-     * parameter setting
+     * parameter setting.
      * @param name parameter name
      * @param value boolean parameter value
      */
-    protected void setParameter(String name, boolean value) {
+    public void setParameter(String name, String[] value) {
+        conf.setStrings(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value @link String} array parameter value
+     */
+    public void setParameter(String name, boolean value) {
         conf.setBoolean(name, value);
     }
 
@@ -728,8 +737,36 @@ public abstract class FilterDriver {
      * @param name parameter name
      * @param value int parameter value
      */
-    protected void setParameter(String name, int value) {
+    public void setParameter(String name, int value) {
         conf.setInt(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value long parameter value
+     */
+    public void setParameter(String name, long value) {
+        conf.setLong(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value float parameter value
+     */
+    public void setParameter(String name, float value) {
+        conf.setFloat(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value Enum parameter value
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void setParameter(String name, Enum value) {
+        conf.setEnum(name, value);
     }
 
     /**

@@ -22,6 +22,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
@@ -63,6 +64,8 @@ public abstract class SummarizerDriver {
     @SuppressWarnings("rawtypes")
     private ReduceDriver<WritableComparable, Writable, WritableComparable, Writable> driver;
 
+    protected Configuration conf;
+
     /**
      * @throws java.lang.Exception
      */
@@ -71,6 +74,7 @@ public abstract class SummarizerDriver {
     public void setUp() throws Exception {
         reducer = (Reducer) getSummarizer();
         driver = new ReduceDriver<WritableComparable, Writable, WritableComparable, Writable>(reducer);
+        conf = new Configuration();
     }
 
     /**
@@ -82,6 +86,7 @@ public abstract class SummarizerDriver {
         if (input.size() < 0) {
             fail("input size is 0");
         }
+        driver.setConfiguration(conf);
 
         Key key = input.get(0).getKey();
         boolean groupingNothing = input.get(0).isGroupingNothing();
@@ -109,4 +114,68 @@ public abstract class SummarizerDriver {
      * @return new {@link Summarizer}
      */
     public abstract Summarizer getSummarizer();
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value {@link String} parameter value
+     */
+    public void setParameter(String name, String value) {
+        conf.set(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value boolean parameter value
+     */
+    public void setParameter(String name, String[] value) {
+        conf.setStrings(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value @link String} array parameter value
+     */
+    public void setParameter(String name, boolean value) {
+        conf.setBoolean(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value int parameter value
+     */
+    public void setParameter(String name, int value) {
+        conf.setInt(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value long parameter value
+     */
+    public void setParameter(String name, long value) {
+        conf.setLong(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value float parameter value
+     */
+    public void setParameter(String name, float value) {
+        conf.setFloat(name, value);
+    }
+
+    /**
+     * parameter setting.
+     * @param name parameter name
+     * @param value Enum parameter value
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void setParameter(String name, Enum value) {
+        conf.setEnum(name, value);
+    }
 }
